@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:unicons/unicons.dart';
-
+//changing from Canvaskit to HTML
 import 'mappings.dart';
 
 void main() {
