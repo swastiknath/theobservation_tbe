@@ -3,7 +3,7 @@ import 'package:unicons/unicons.dart';
 
 
 
-enum DicePositions {one, two, three, four, five, six}
+enum DicePositions {initial, one, two, three, four, five, six}
 
 extension DiceIcons on DicePositions {
   IconData get diceIconData {
@@ -12,7 +12,7 @@ extension DiceIcons on DicePositions {
         return UniconsLine.dice_one;
 
       case DicePositions.five:
-        return UniconsLine.dice_two;
+        return UniconsLine.dice_five;
 
       case DicePositions.two:
         return UniconsLine.dice_two;
@@ -47,13 +47,13 @@ extension DiceIcons on DicePositions {
          return "Where do you see yourself 5 years down the lane?";
 
        case DicePositions.five:
-         return "How do you think the world has changed over the last decade, and how it will continue to change according to you? (Specifically talk about the world of your respective expertise";
+         return "How do you think the world has changed over the last decade, and how it will continue to change according to you? (Specifically talk about the world of your respective expertise)";
 
        case DicePositions.six:
          return "Do you live to work or work to live?";
 
        default:
-         return "";
+         return "Roll the Die to view your Questions";
 
      }
   }

@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:html' as html;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obs_mtc_tbe3/notifiers.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:unicons/unicons.dart';
+
 //changing from Canvaskit to HTML
 import 'mappings.dart';
 
@@ -24,51 +28,35 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         colorSchemeSeed: const Color(0xffe42a2a),
       ),
-      home: MyHomePage(title: 'The Observation MTC'),
+      home: ProviderScope(child: MyHomePage()),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomePage extends StatelessWidget {
+  MyHomePage({Key? key}) : super(key: key);
   ScreenshotController screenshotController = ScreenshotController();
   double devicePixelRatio = 1.0;
-  List<DicePositions> states = DicePositions.values.toList();
-
-  DicePositions state1 = DicePositions.one;
-  DicePositions state2 = DicePositions.three;
 
   void takeAndDownloadScreenShot() async {
-    await screenshotController.capture(
+    await screenshotController
+        .capture(
       pixelRatio: devicePixelRatio,
       delay: const Duration(
         milliseconds: 100,
       ),
-    ).then((pngBytes) {
-
+    )
+        .then((pngBytes) {
       final base64 = base64Encode(pngBytes!);
-      final anchor =
-      html.AnchorElement(href: 'data:application/octet-stream;base64,$base64')
+      final anchor = html.AnchorElement(
+          href: 'data:application/octet-stream;base64,$base64')
         ..download = "obs_mtc_dice_position.png"
         ..target = 'blank';
 
       html.document.body!.append(anchor);
       anchor.click();
       anchor.remove();
-
-
     });
-  }
-
-  void reshuffle() async {
-    Future.delayed(const Duration(seconds: 4), () {});
   }
 
   @override
@@ -79,93 +67,153 @@ class _MyHomePageState extends State<MyHomePage> {
     devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            SizedBox(
-              height: deviceHeight * 0.1,
-            ),
-            const HeadLine(),
-            const SizedBox(
-              height: 10,
-            ),
-            Center(
-                child: Text(
-              'Team Building Exercise #3 - The DiceBreaker',
-              style: GoogleFonts.cagliostro(
-                fontSize: 15,
+      body: Consumer(builder: (context, ref, _) {
+        List<DicePositions> currentStates = ref.watch(diceProvider);
+
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+               SizedBox(
+                height: 15,
+                child: Center(child: Text("The Observation ❤️ Serverless Architecture",  style: GoogleFonts.jura(fontSize: 9, letterSpacing: 1.5), ),),
               ),
-            )),
-            Center(
+              const HeadLine(),
+              const SizedBox(
+                height: 10,
+              ),
+              Center(
+                  child: Text(
+                'Team Building Exercise #3 - The DiceBreaker',
+                style: GoogleFonts.cagliostro(
+                  fontSize: 15,
+                ),
+              )),
+              Center(
                 child: Text(
-                  'For instructions please refer to the Official \nNotification published with the Working Group.',
+                  'For instructions please refer to the Official \nNotification published within the Working Group.',
                   style: GoogleFonts.jura(
                     fontSize: 10,
                   ),
-                )),
-            Screenshot(
-              controller: screenshotController,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: deviceWidth > kMaxWidth ? 350 : kMaxWidth,
-                    child: Card(
-                      elevation: 10,
-                      borderOnForeground: false,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                ),
+              ),
+              Screenshot(
+                controller: screenshotController,
+                child: Column(
+                  children: [
+                    Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Roll the Dice",
-                              style: GoogleFonts.jura(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
+                        padding: const EdgeInsets.all(16.0),
+                        child: SizedBox(
+                          width: deviceWidth > kMaxWidth ? 350 : kMaxWidth,
+                          child: Card(
+                            elevation: 10,
+                            borderOnForeground: false,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(30.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    currentStates[0] == DicePositions.initial
+                                        ? "Tap on the Shuffle Icon to Roll the Die."
+                                        : "Your Die Positions Are: ",
+                                    style: GoogleFonts.jura(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        currentStates[0].diceIconData,
+                                        size: 100,
+                                      ),
+                                      Icon(
+                                        currentStates[1].diceIconData,
+                                        size: 100,
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  state1.diceIconData,
-                                  size: 100,
-                                ),
-                                Icon(
-                                  state2.diceIconData,
-                                  size: 100,
-                                ),
-                              ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Center(
+                      child: Container(
+                        width: 350,
+                        decoration: BoxDecoration(
+                          color: const Color(0xff211A19),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (currentStates[0] != DicePositions.initial)
+                              QuestionDisplay(
+                                state: currentStates[0],
+                              ),
+                            const SizedBox(
+                              height: 10,
                             ),
-
+                            if (currentStates[1] != DicePositions.initial)
+                              QuestionDisplay(
+                                state: currentStates[1],
+                              ),
+                            if (currentStates[0] == DicePositions.initial)
+                              Center(
+                                child: Text(
+                                  "Roll Your Die to Get Your Questions",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.jura(
+                                    fontSize: 20,
+                                    color: Colors.red[200],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 5,),
+                  ],
                 ),
               ),
-            ),
-            QuestionDisplay(state: state1,),
-            const SizedBox(height: 10,),
-            QuestionDisplay(state: state2,),
-          ],
-        ),
-      ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: takeAndDownloadScreenShot,
-        tooltip: 'Save the Dice State',
-        child: const Icon(UniconsLine.image_download),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+            ],
+          ),
+        );
+      }),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Consumer(builder: (context, ref, child) {
+        List<DicePositions> crStates = ref.watch(diceProvider);
+
+        return FloatingActionButton(
+          onPressed: crStates.contains(DicePositions.initial)
+              ? () => ref.read(diceProvider.notifier).reshuffle()
+              : takeAndDownloadScreenShot,
+          tooltip: crStates.contains(DicePositions.initial)
+              ? 'Reshuffle'
+              : 'Download Dice Image',
+          child: crStates.contains(DicePositions.initial)
+              ? const Icon(UniconsLine.play)
+              : const Icon(UniconsLine.image_download),
+        );
+      }),
     );
   }
 }
@@ -174,30 +222,35 @@ class QuestionDisplay extends StatelessWidget {
   const QuestionDisplay({
     Key? key,
     required this.state,
-
   }) : super(key: key);
 
   final DicePositions state;
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SizedBox(
-        width: 350,
-
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Question #${state.diceFaceValue.toString()}:", style: GoogleFonts.cagliostro(fontSize: 18, color: Colors.red[200]), textAlign: TextAlign.left,),
-            const SizedBox(height: 5,),
-            Text(state.questionsData, maxLines: 3, style: GoogleFonts.jura(fontSize: 14),),
-          ],
-        ),
-
-      )
-    );
+        child: SizedBox(
+      width: 350,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Question #${state.diceFaceValue.toString()}:",
+            style: GoogleFonts.cagliostro(fontSize: 18, color: Colors.red[200]),
+            textAlign: TextAlign.left,
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          Text(
+            state.questionsData,
+            maxLines: 10,
+            style: GoogleFonts.jura(fontSize: 14),
+          ),
+        ],
+      ),
+    ));
   }
 }
 
